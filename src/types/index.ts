@@ -1,6 +1,6 @@
 export interface Review {
   date: string;
-  category: "Positive" | "Neutral" | "Negative";
+  category: "Positive" | "Negative";
   severityScore: number;
   areaOfInconvenience: string[];
   OTA: string;
@@ -9,18 +9,25 @@ export interface Review {
 }
 
 export type OTAFilter = "All" | "Booking.com" | "TripAdvisor";
-export type DateRangeFilter = "all" | "7days" | "30days" | "3months" | "6months";
+export type DateRangeFilter =
+  | "all"
+  | "7days"
+  | "30days"
+  | "3months"
+  | "6months";
 
 export const AREA_CATEGORIES = [
   "Rooms",
-  "Location",
+  "Comfort",
+  "Food",
   "Staff service",
+  "Location",
+  "Hotel Service",
+  "Sleep Quality",
+  "Parking",
+  "Space Utilization",
   "Ambience",
   "Cleanliness",
-  "Comfort",
-  "Sleep Quality",
-  "Food",
-  "Hotel Service",
 ] as const;
 
-export type AreaCategory = typeof AREA_CATEGORIES[number];
+export type AreaCategory = (typeof AREA_CATEGORIES)[number];

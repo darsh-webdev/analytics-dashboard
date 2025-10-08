@@ -8,9 +8,9 @@ import {
   FaChartPie,
   FaRegSmile,
   FaRegFrown,
-  FaRegMeh,
   FaFilter,
   FaArrowLeft,
+  FaStar,
 } from "react-icons/fa";
 
 import {
@@ -71,7 +71,10 @@ function groupByCategory(data: Review[]) {
 }
 
 function groupByDateAndCategory(data: Review[]) {
-  const res: Record<string, { Positive: number; Neutral: number; Negative: number }> = {};
+  const res: Record<
+    string,
+    { Positive: number; Neutral: number; Negative: number }
+  > = {};
   data.forEach(({ date, category }) => {
     if (!res[date]) res[date] = { Positive: 0, Neutral: 0, Negative: 0 };
     res[date][category]++;
@@ -80,8 +83,8 @@ function groupByDateAndCategory(data: Review[]) {
 }
 
 function avgSeverityByCategory(data: Review[]) {
-  const totals = { Positive: 0, Neutral: 0, Negative: 0 };
-  const counts = { Positive: 0, Neutral: 0, Negative: 0 };
+  const totals = { Positive: 0, Negative: 0 };
+  const counts = { Positive: 0, Negative: 0 };
   data.forEach(({ category, severityScore }) => {
     totals[category] += severityScore;
     counts[category]++;
@@ -89,15 +92,18 @@ function avgSeverityByCategory(data: Review[]) {
   return {
     labels: Object.keys(totals),
     data: Object.keys(totals).map((cat) =>
-      counts[cat as keyof typeof counts] ? totals[cat as keyof typeof totals] / counts[cat as keyof typeof counts] : 0
+      counts[cat as keyof typeof counts]
+        ? totals[cat as keyof typeof totals] /
+          counts[cat as keyof typeof counts]
+        : 0
     ),
   };
 }
 
 function countByAreaOfInconvenience(data: Review[]) {
   const map: Record<string, number> = {};
-  AREA_CATEGORIES.forEach(area => map[area] = 0);
-  
+  AREA_CATEGORIES.forEach((area) => (map[area] = 0));
+
   data.forEach(({ areaOfInconvenience }) => {
     areaOfInconvenience.forEach((area) => {
       // Check if area exists in predefined categories
@@ -113,7 +119,7 @@ function countByAreaOfInconvenience(data: Review[]) {
 function filterByDateRange(data: Review[], range: string) {
   const now = new Date();
   const cutoffDate = new Date();
-  
+
   switch (range) {
     case "7days":
       cutoffDate.setDate(now.getDate() - 7);
@@ -130,7 +136,7 @@ function filterByDateRange(data: Review[], range: string) {
     default:
       return data;
   }
-  
+
   return data.filter((review) => new Date(review.date) >= cutoffDate);
 }
 
@@ -142,26 +148,31 @@ export default function Dashboard() {
   // Filter data based on hotel name, OTA, and date range
   const filteredData = useMemo(() => {
     let data = reviewData;
-    
+
     // Filter by hotel name (skip if "all")
     if (hotelName && hotelName.toLowerCase() !== "all") {
-      data = data.filter((r) => r.hotelName.toLowerCase() === hotelName.toLowerCase());
+      data = data.filter(
+        (r) => r.hotelName.toLowerCase() === hotelName.toLowerCase()
+      );
     }
-    
+
     // Filter by OTA
     if (otaFilter !== "All") {
       data = data.filter((r) => r.OTA === otaFilter);
     }
-    
+
     // Filter by date range
     data = filterByDateRange(data, dateRange);
-    
+
     return data;
   }, [hotelName, otaFilter, dateRange]);
 
   // Calculate stats and chart data
-  const categoryCounts = useMemo(() => groupByCategory(filteredData), [filteredData]);
-  
+  const categoryCounts = useMemo(
+    () => groupByCategory(filteredData),
+    [filteredData]
+  );
+
   const trendsData = useMemo(() => {
     const grouped = groupByDateAndCategory(filteredData);
     const sortedDates = Object.keys(grouped).sort();
@@ -176,13 +187,6 @@ export default function Dashboard() {
           fill: false,
         },
         {
-          label: "Neutral",
-          data: sortedDates.map((date) => grouped[date].Neutral),
-          borderColor: "#ffc107",
-          backgroundColor: "rgba(255, 193, 7, 0.1)",
-          fill: false,
-        },
-        {
           label: "Negative",
           data: sortedDates.map((date) => grouped[date].Negative),
           borderColor: "#f44336",
@@ -193,10 +197,16 @@ export default function Dashboard() {
     };
   }, [filteredData]);
 
-  const severityData = useMemo(() => avgSeverityByCategory(filteredData), [filteredData]);
+  const severityData = useMemo(
+    () => avgSeverityByCategory(filteredData),
+    [filteredData]
+  );
 
-  const areaCounts = useMemo(() => countByAreaOfInconvenience(filteredData), [filteredData]);
-  
+  const areaCounts = useMemo(
+    () => countByAreaOfInconvenience(filteredData),
+    [filteredData]
+  );
+
   const areaChartData = useMemo(() => {
     return {
       labels: Object.keys(areaCounts),
@@ -221,19 +231,28 @@ export default function Dashboard() {
     };
   }, [areaCounts]);
 
-  const pieData = useMemo(() => ({
-    labels: Object.keys(categoryCounts),
-    datasets: [
-      {
-        data: Object.values(categoryCounts),
-        backgroundColor: ["#4caf50", "#ffc107", "#f44336"],
-      },
-    ],
-  }), [categoryCounts]);
+  const pieData = useMemo(
+    () => ({
+      labels: Object.keys(categoryCounts),
+      datasets: [
+        {
+          data: Object.values(categoryCounts),
+          backgroundColor: ["#4caf50", "#f44336"],
+        },
+      ],
+    }),
+    [categoryCounts]
+  );
 
-  const goodCount = filteredData.filter((r) => r.category === "Positive").length;
+  const goodCount = filteredData.filter(
+    (r) => r.category === "Positive"
+  ).length;
+
   const badCount = filteredData.filter((r) => r.category === "Negative").length;
-  const neutralCount = filteredData.filter((r) => r.category === "Neutral").length;
+
+  const averageSeverity =
+    filteredData.reduce((acc, review) => acc + review.severityScore, 0) /
+    filteredData.length;
 
   // Card component for better organization
   const StatCard = ({
@@ -270,9 +289,10 @@ export default function Dashboard() {
       </Link>
       <header className="dashboard-header">
         <h1>
-          {hotelName && hotelName.toLowerCase() !== "all" 
-            ? `${hotelName.charAt(0).toUpperCase() + hotelName.slice(1)} Hotel` 
-            : "All Hotels"} - Review Analytics
+          {hotelName && hotelName.toLowerCase() !== "all"
+            ? `${hotelName.charAt(0).toUpperCase() + hotelName.slice(1)} Hotel`
+            : "All Hotels"}{" "}
+          - Review Analytics
         </h1>
         <div className="filters-container">
           <div className="filter-group">
@@ -305,22 +325,22 @@ export default function Dashboard() {
 
       <div className="stats-grid">
         <StatCard
+          title="Rating"
+          value={`${averageSeverity.toFixed(2)}/10`}
+          icon={FaStar}
+          color="#FFCE56"
+        />
+        <StatCard
           title="Total Reviews"
           value={filteredData.length}
           icon={FaChartPie}
-          color="#4caf50"
+          color="#9966FF"
         />
         <StatCard
           title="Positive"
           value={goodCount}
           icon={FaRegSmile}
           color="#4caf50"
-        />
-        <StatCard
-          title="Neutral"
-          value={neutralCount}
-          icon={FaRegMeh}
-          color="#ffc107"
         />
         <StatCard
           title="Negative"
@@ -355,7 +375,7 @@ export default function Dashboard() {
                   {
                     label: "Severity Score",
                     data: severityData.data,
-                    backgroundColor: ["#4caf50", "#ffc107", "#f44336"],
+                    backgroundColor: ["#4caf50", "#f44336"],
                     borderRadius: 4,
                   },
                 ],
@@ -394,15 +414,15 @@ export default function Dashboard() {
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: "y",
+                indexAxis: "x",
                 scales: {
                   x: {
-                    beginAtZero: true,
                     grid: {
                       display: false,
                     },
                   },
                   y: {
+                    beginAtZero: true,
                     grid: {
                       display: false,
                     },

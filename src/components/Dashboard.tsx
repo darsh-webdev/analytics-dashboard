@@ -25,9 +25,11 @@ import {
   Tooltip,
   Legend,
   Filler,
+  TimeScale,
 } from "chart.js";
+import "chartjs-adapter-date-fns";
 
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { Bar, Doughnut, Line, Scatter } from "react-chartjs-2";
 import "../App.css";
 
 // Register ChartJS components
@@ -38,6 +40,7 @@ ChartJS.register(
   ArcElement,
   PointElement,
   LineElement,
+  TimeScale,
   Title,
   Tooltip,
   Legend,
@@ -68,6 +71,13 @@ function groupByCategory(data: Review[]) {
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
+}
+
+function severityByDate(data: Review[]) {
+  return data.map((review) => ({
+    x: review.date, // x-axis as date
+    y: review.severityScore, // y-axis as score
+  }));
 }
 
 function groupByDateAndCategory(data: Review[]) {
@@ -253,6 +263,22 @@ export default function Dashboard() {
   const averageSeverity =
     filteredData.reduce((acc, review) => acc + review.severityScore, 0) /
     filteredData.length;
+
+  const scatterData = useMemo(
+    () => ({
+      datasets: [
+        {
+          label: "Severity Score",
+          data: severityByDate(filteredData),
+          backgroundColor: "rgba(75, 192, 192, 0.6)",
+          borderColor: "rgba(75, 192, 192, 1)",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        },
+      ],
+    }),
+    [filteredData]
+  );
 
   // Card component for better organization
   const StatCard = ({
@@ -447,7 +473,6 @@ export default function Dashboard() {
                 maintainAspectRatio: false,
                 scales: {
                   y: {
-                    beginAtZero: true,
                     grid: {
                       display: false,
                     },
@@ -471,6 +496,59 @@ export default function Dashboard() {
                   point: {
                     radius: 4,
                     hoverRadius: 6,
+                  },
+                },
+              }}
+            />
+          </ChartCard>
+        </div>
+
+        <div className="chart-row">
+          <ChartCard title="Severity Score Over Time" className="full-width">
+            <Scatter
+              data={scatterData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "top" as const,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      title: (context) => {
+                        const date = new Date(context[0].parsed.x);
+                        return date.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        });
+                      },
+                      label: (context) => {
+                        return `Severity Score: ${context.parsed.y}`;
+                      },
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    type: "time" as const,
+                    time: {
+                      unit: "day",
+                      displayFormats: {
+                        day: "MMM dd, yyyy",
+                      },
+                    },
+                    grid: {
+                      display: false,
+                    },
+                  },
+                  y: {
+                    beginAtZero: true,
+                    max: 11,
+                    grid: {
+                      display: false,
+                    },
                   },
                 },
               }}

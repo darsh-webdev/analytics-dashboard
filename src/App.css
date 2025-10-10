@@ -6,7 +6,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+  font-family: "Segoe UI", "Roboto", "Oxygen", sans-serif;
   background-color: #f5f7fa;
   color: #333;
   line-height: 1.6;
@@ -176,7 +176,7 @@ body {
   .chart-row {
     flex-direction: column;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
@@ -186,16 +186,16 @@ body {
   .dashboard {
     padding: 12px;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .chart-card {
     padding: 16px;
   }
-  
+
   .chart-container {
     height: 250px;
   }
@@ -203,8 +203,14 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chart-card {
@@ -339,7 +345,7 @@ body {
   align-items: center;
   gap: 8px;
   background: white;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -368,6 +374,95 @@ body {
   padding: 8px;
 }
 
+/* Multi-Select Dropdown Styles */
+.multi-select-dropdown {
+  position: relative;
+  min-width: 150px;
+}
+
+.multi-select-display {
+  padding: 2px 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.multi-select-display:hover {
+  border-color: #9966ff;
+  background: #f9f9f9;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.multi-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.multi-select-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  gap: 8px;
+}
+
+.multi-select-option:hover {
+  background: #f5f5f5;
+}
+
+.multi-select-option input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.multi-select-option span {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Scrollbar styling for dropdown */
+.multi-select-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.multi-select-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.multi-select-options::-webkit-scrollbar-thumb {
+  background: #9966ff;
+  border-radius: 4px;
+}
+
+.multi-select-options::-webkit-scrollbar-thumb:hover {
+  background: #7744dd;
+}
+
 /* Responsive adjustments for filters */
 @media (max-width: 768px) {
   .dashboard-header {
@@ -375,20 +470,20 @@ body {
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .filters-container {
     width: 100%;
     justify-content: flex-start;
   }
-  
+
   .home-title {
     font-size: 32px;
   }
-  
+
   .home-subtitle {
     font-size: 16px;
   }
-  
+
   .hotel-grid {
     grid-template-columns: 1fr;
   }

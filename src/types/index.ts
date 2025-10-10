@@ -8,7 +8,17 @@ export interface Review {
   response?: boolean;
 }
 
-export type OTAFilter = "All" | "Booking.com" | "TripAdvisor";
+export type OTAFilter =
+  | "All"
+  | "Booking.com"
+  | "TripAdvisor"
+  | "Expedia"
+  | "Hotels.com"
+  | "Agoda"
+  | "Airbnb"
+  | "MakeMyTrip"
+  | "Goibibo";
+
 export type DateRangeFilter =
   | "all"
   | "7days"

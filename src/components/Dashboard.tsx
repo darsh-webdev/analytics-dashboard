@@ -92,23 +92,23 @@ function groupByDateAndCategory(data: Review[]) {
   return res;
 }
 
-function avgSeverityByCategory(data: Review[]) {
-  const totals = { Positive: 0, Negative: 0 };
-  const counts = { Positive: 0, Negative: 0 };
-  data.forEach(({ category, severityScore }) => {
-    totals[category] += severityScore;
-    counts[category]++;
-  });
-  return {
-    labels: Object.keys(totals),
-    data: Object.keys(totals).map((cat) =>
-      counts[cat as keyof typeof counts]
-        ? totals[cat as keyof typeof totals] /
-          counts[cat as keyof typeof counts]
-        : 0
-    ),
-  };
-}
+// function avgSeverityByCategory(data: Review[]) {
+//   const totals = { Positive: 0, Negative: 0 };
+//   const counts = { Positive: 0, Negative: 0 };
+//   data.forEach(({ category, severityScore }) => {
+//     totals[category] += severityScore;
+//     counts[category]++;
+//   });
+//   return {
+//     labels: Object.keys(totals),
+//     data: Object.keys(totals).map((cat) =>
+//       counts[cat as keyof typeof counts]
+//         ? totals[cat as keyof typeof totals] /
+//           counts[cat as keyof typeof counts]
+//         : 0
+//     ),
+//   };
+// }
 
 function countByAreaOfInconvenience(data: Review[]) {
   const map: Record<string, number> = {};
@@ -152,8 +152,38 @@ function filterByDateRange(data: Review[], range: string) {
 
 export default function Dashboard() {
   const { hotelName } = useParams<{ hotelName: string }>();
-  const [otaFilter, setOtaFilter] = useState<OTAFilter>("All");
+  const [otaFilter, setOtaFilter] = useState<OTAFilter[]>(["All"]);
   const [dateRange, setDateRange] = useState<DateRangeFilter>("all");
+  const [isOtaDropdownOpen, setIsOtaDropdownOpen] = useState(false);
+
+  const otaPlatforms: OTAFilter[] = [
+    "All",
+    "Booking.com",
+    "TripAdvisor",
+    "Expedia",
+    "Hotels.com",
+    "Agoda",
+    "Airbnb",
+    "MakeMyTrip",
+    "Goibibo",
+  ];
+
+  // Handle OTA filter toggle
+  const handleOtaToggle = (ota: OTAFilter) => {
+    if (ota === "All") {
+      setOtaFilter(["All"]);
+    } else {
+      setOtaFilter((prev) => {
+        const filtered = prev.filter((o) => o !== "All");
+        if (filtered.includes(ota)) {
+          const updated = filtered.filter((o) => o !== ota);
+          return updated.length === 0 ? ["All"] : updated;
+        } else {
+          return [...filtered, ota];
+        }
+      });
+    }
+  };
 
   // Filter data based on hotel name, OTA, and date range
   const filteredData = useMemo(() => {
@@ -167,8 +197,8 @@ export default function Dashboard() {
     }
 
     // Filter by OTA
-    if (otaFilter !== "All") {
-      data = data.filter((r) => r.OTA === otaFilter);
+    if (!otaFilter.includes("All")) {
+      data = data.filter((r) => otaFilter.includes(r.OTA as OTAFilter));
     }
 
     // Filter by date range
@@ -207,10 +237,21 @@ export default function Dashboard() {
     };
   }, [filteredData]);
 
-  const severityData = useMemo(
-    () => avgSeverityByCategory(filteredData),
-    [filteredData]
-  );
+  const severityData = useMemo(() => {
+    const selectedOTAs = otaFilter.includes("All")
+      ? otaPlatforms.filter((ota) => ota !== "All")
+      : otaFilter;
+
+    const otaCounts: Record<string, number> = {};
+    selectedOTAs.forEach((ota) => {
+      otaCounts[ota] = filteredData.filter((r) => r.OTA === ota).length;
+    });
+
+    return {
+      labels: Object.keys(otaCounts),
+      data: Object.values(otaCounts),
+    };
+  }, [filteredData, otaFilter]);
 
   const areaCounts = useMemo(
     () => countByAreaOfInconvenience(filteredData),
@@ -323,15 +364,37 @@ export default function Dashboard() {
         <div className="filters-container">
           <div className="filter-group">
             <FaFilter className="filter-icon" />
-            <select
-              value={otaFilter}
-              onChange={(e) => setOtaFilter(e.target.value as OTAFilter)}
-              className="filter-select"
-            >
-              <option value="All">All OTAs</option>
-              <option value="Booking.com">Booking.com</option>
-              <option value="TripAdvisor">TripAdvisor</option>
-            </select>
+            <div className="multi-select-dropdown">
+              <div
+                className="multi-select-display"
+                onClick={() => setIsOtaDropdownOpen(!isOtaDropdownOpen)}
+              >
+                {otaFilter.includes("All")
+                  ? "All OTAs"
+                  : otaFilter.length === 0
+                  ? "Select OTAs"
+                  : `${otaFilter.length} OTA${
+                      otaFilter.length > 1 ? "s" : ""
+                    } selected`}
+                <span className="dropdown-arrow">
+                  {isOtaDropdownOpen ? "▲" : "▼"}
+                </span>
+              </div>
+              {isOtaDropdownOpen && (
+                <div className="multi-select-options">
+                  {otaPlatforms.map((ota) => (
+                    <label key={ota} className="multi-select-option">
+                      <input
+                        type="checkbox"
+                        checked={otaFilter.includes(ota)}
+                        onChange={() => handleOtaToggle(ota)}
+                      />
+                      <span>{ota}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="filter-group">
             <select
@@ -393,7 +456,7 @@ export default function Dashboard() {
             />
           </ChartCard>
 
-          <ChartCard title="Average Severity by Category" className="bar-chart">
+          {/* <ChartCard title="Average Severity by Category" className="bar-chart">
             <Bar
               data={{
                 labels: severityData.labels,
@@ -426,6 +489,63 @@ export default function Dashboard() {
                 plugins: {
                   legend: {
                     display: false,
+                  },
+                },
+              }}
+            />
+          </ChartCard> */}
+
+          <ChartCard title="Reviews per OTA Platform" className="bar-chart">
+            <Bar
+              data={{
+                labels: severityData.labels,
+                datasets: [
+                  {
+                    label: "Review Count",
+                    data: severityData.data,
+                    backgroundColor: [
+                      "#FF6384",
+                      "#36A2EB",
+                      "#FFCE56",
+                      "#4BC0C0",
+                      "#9966FF",
+                      "#FF9F40",
+                      "#E7E9ED",
+                      "#C9CBCF",
+                    ],
+                    borderRadius: 4,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      display: false,
+                    },
+                    ticks: {
+                      stepSize: 1,
+                    },
+                  },
+                  x: {
+                    grid: {
+                      display: false,
+                    },
+                  },
+                },
+                plugins: {
+                  legend: {
+                    display: false,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => {
+                        return `Reviews: ${context.parsed.y}`;
+                      },
+                    },
                   },
                 },
               }}

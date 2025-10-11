@@ -92,24 +92,6 @@ function groupByDateAndCategory(data: Review[]) {
   return res;
 }
 
-// function avgSeverityByCategory(data: Review[]) {
-//   const totals = { Positive: 0, Negative: 0 };
-//   const counts = { Positive: 0, Negative: 0 };
-//   data.forEach(({ category, severityScore }) => {
-//     totals[category] += severityScore;
-//     counts[category]++;
-//   });
-//   return {
-//     labels: Object.keys(totals),
-//     data: Object.keys(totals).map((cat) =>
-//       counts[cat as keyof typeof counts]
-//         ? totals[cat as keyof typeof totals] /
-//           counts[cat as keyof typeof counts]
-//         : 0
-//     ),
-//   };
-// }
-
 function countByAreaOfInconvenience(data: Review[]) {
   const map: Record<string, number> = {};
   AREA_CATEGORIES.forEach((area) => (map[area] = 0));
@@ -156,17 +138,20 @@ export default function Dashboard() {
   const [dateRange, setDateRange] = useState<DateRangeFilter>("all");
   const [isOtaDropdownOpen, setIsOtaDropdownOpen] = useState(false);
 
-  const otaPlatforms: OTAFilter[] = [
-    "All",
-    "Booking.com",
-    "TripAdvisor",
-    "Expedia",
-    "Hotels.com",
-    "Agoda",
-    "Airbnb",
-    "MakeMyTrip",
-    "Goibibo",
-  ];
+  const otaPlatforms: OTAFilter[] = useMemo(
+    () => [
+      "All",
+      "Booking.com",
+      "TripAdvisor",
+      "Expedia",
+      "Hotels.com",
+      "Agoda",
+      "Airbnb",
+      "MakeMyTrip",
+      "Goibibo",
+    ],
+    []
+  );
 
   // Handle OTA filter toggle
   const handleOtaToggle = (ota: OTAFilter) => {
@@ -251,7 +236,7 @@ export default function Dashboard() {
       labels: Object.keys(otaCounts),
       data: Object.values(otaCounts),
     };
-  }, [filteredData, otaFilter]);
+  }, [filteredData, otaFilter, otaPlatforms]);
 
   const areaCounts = useMemo(
     () => countByAreaOfInconvenience(filteredData),
@@ -455,46 +440,6 @@ export default function Dashboard() {
               }}
             />
           </ChartCard>
-
-          {/* <ChartCard title="Average Severity by Category" className="bar-chart">
-            <Bar
-              data={{
-                labels: severityData.labels,
-                datasets: [
-                  {
-                    label: "Severity Score",
-                    data: severityData.data,
-                    backgroundColor: ["#4caf50", "#f44336"],
-                    borderRadius: 4,
-                  },
-                ],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    max: 10,
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-              }}
-            />
-          </ChartCard> */}
-
           <ChartCard title="Reviews per OTA Platform" className="bar-chart">
             <Bar
               data={{

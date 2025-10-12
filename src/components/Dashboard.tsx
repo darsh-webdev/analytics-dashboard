@@ -1,17 +1,9 @@
 import { useMemo, useState } from "react";
-import type { ReactNode } from "react";
 import { useParams, Link } from "react-router-dom";
 import { reviewData } from "../data/dummyData";
 import type { Review, OTAFilter, DateRangeFilter } from "../types";
 import { AREA_CATEGORIES } from "../types";
-import {
-  FaChartPie,
-  FaRegSmile,
-  FaRegFrown,
-  FaFilter,
-  FaArrowLeft,
-  FaStar,
-} from "react-icons/fa";
+import { ArrowLeft, Star, Smile, Frown, BarChart3, Filter } from "lucide-react";
 
 import {
   Chart as ChartJS,
@@ -30,7 +22,16 @@ import {
 import "chartjs-adapter-date-fns";
 
 import { Bar, Doughnut, Line, Scatter } from "react-chartjs-2";
-import "../App.css";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 // Register ChartJS components
 ChartJS.register(
@@ -54,15 +55,9 @@ ChartJS.defaults.color = "#666";
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: React.ComponentType<{ size: number }>;
+  icon: React.ElementType;
   color: string;
   trend?: string | null;
-}
-
-interface ChartCardProps {
-  title: string;
-  children: ReactNode;
-  className?: string;
 }
 
 // Helper functions
@@ -75,8 +70,8 @@ function groupByCategory(data: Review[]) {
 
 function severityByDate(data: Review[]) {
   return data.map((review) => ({
-    x: review.date, // x-axis as date
-    y: review.severityScore, // y-axis as score
+    x: review.date,
+    y: review.severityScore,
   }));
 }
 
@@ -98,7 +93,6 @@ function countByAreaOfInconvenience(data: Review[]) {
 
   data.forEach(({ areaOfInconvenience }) => {
     areaOfInconvenience.forEach((area) => {
-      // Check if area exists in predefined categories
       const areaCategories = AREA_CATEGORIES as readonly string[];
       if (areaCategories.includes(area)) {
         map[area] = (map[area] || 0) + 1;
@@ -136,7 +130,6 @@ export default function Dashboard() {
   const { hotelName } = useParams<{ hotelName: string }>();
   const [otaFilter, setOtaFilter] = useState<OTAFilter[]>(["All"]);
   const [dateRange, setDateRange] = useState<DateRangeFilter>("all");
-  const [isOtaDropdownOpen, setIsOtaDropdownOpen] = useState(false);
 
   const otaPlatforms: OTAFilter[] = useMemo(
     () => [
@@ -153,40 +146,20 @@ export default function Dashboard() {
     []
   );
 
-  // Handle OTA filter toggle
-  const handleOtaToggle = (ota: OTAFilter) => {
-    if (ota === "All") {
-      setOtaFilter(["All"]);
-    } else {
-      setOtaFilter((prev) => {
-        const filtered = prev.filter((o) => o !== "All");
-        if (filtered.includes(ota)) {
-          const updated = filtered.filter((o) => o !== ota);
-          return updated.length === 0 ? ["All"] : updated;
-        } else {
-          return [...filtered, ota];
-        }
-      });
-    }
-  };
-
   // Filter data based on hotel name, OTA, and date range
   const filteredData = useMemo(() => {
     let data = reviewData;
 
-    // Filter by hotel name (skip if "all")
     if (hotelName && hotelName.toLowerCase() !== "all") {
       data = data.filter(
         (r) => r.hotelName.toLowerCase() === hotelName.toLowerCase()
       );
     }
 
-    // Filter by OTA
     if (!otaFilter.includes("All")) {
       data = data.filter((r) => otaFilter.includes(r.OTA as OTAFilter));
     }
 
-    // Filter by date range
     data = filterByDateRange(data, dateRange);
 
     return data;
@@ -314,311 +287,331 @@ export default function Dashboard() {
     color,
     trend = null,
   }: StatCardProps) => (
-    <div className="stat-card" style={{ borderTop: `4px solid ${color}` }}>
-      <div className="stat-icon" style={{ color }}>
-        <Icon size={24} />
-      </div>
-      <div className="stat-content">
-        <h3>{title}</h3>
-        <p className="stat-value">{value}</p>
-        {trend && <span className="stat-trend">{trend}</span>}
-      </div>
-    </div>
-  );
-
-  // Chart wrapper component for consistent styling
-  const ChartCard = ({ title, children, className = "" }: ChartCardProps) => (
-    <div className={`chart-card ${className}`}>
-      <h3>{title}</h3>
-      <div className="chart-container">{children}</div>
-    </div>
+    <Card className="transition-all hover:shadow-lg">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-muted-foreground mb-1">
+              {title}
+            </p>
+            <p className="text-3xl font-bold">{value}</p>
+            {trend && (
+              <span className="text-xs text-green-600 font-medium">
+                {trend}
+              </span>
+            )}
+          </div>
+          <div
+            className="ml-4 p-3 rounded-full"
+            style={{ backgroundColor: `${color}20` }}
+          >
+            <Icon className="w-6 h-6" style={{ color }} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 
   return (
-    <div className="dashboard">
-      <Link to="/" className="back-button">
-        <FaArrowLeft /> Back to Home
-      </Link>
-      <header className="dashboard-header">
-        <h1>
-          {hotelName && hotelName.toLowerCase() !== "all"
-            ? `${hotelName.charAt(0).toUpperCase() + hotelName.slice(1)} Hotel`
-            : "All Hotels"}{" "}
-          - Review Analytics
-        </h1>
-        <div className="filters-container">
-          <div className="filter-group">
-            <FaFilter className="filter-icon" />
-            <div className="multi-select-dropdown">
-              <div
-                className="multi-select-display"
-                onClick={() => setIsOtaDropdownOpen(!isOtaDropdownOpen)}
-              >
-                {otaFilter.includes("All")
-                  ? "All OTAs"
-                  : otaFilter.length === 0
-                  ? "Select OTAs"
-                  : `${otaFilter.length} OTA${
-                      otaFilter.length > 1 ? "s" : ""
-                    } selected`}
-                <span className="dropdown-arrow">
-                  {isOtaDropdownOpen ? "▲" : "▼"}
-                </span>
-              </div>
-              {isOtaDropdownOpen && (
-                <div className="multi-select-options">
-                  {otaPlatforms.map((ota) => (
-                    <label key={ota} className="multi-select-option">
-                      <input
-                        type="checkbox"
-                        checked={otaFilter.includes(ota)}
-                        onChange={() => handleOtaToggle(ota)}
-                      />
-                      <span>{ota}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <Button asChild variant="ghost" className="mb-4 hover:bg-purple-50">
+          <Link to="/" className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+        </Button>
+
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-4 border-b">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {hotelName && hotelName.toLowerCase() !== "all"
+              ? `${
+                  hotelName.charAt(0).toUpperCase() + hotelName.slice(1)
+                } Hotel`
+              : "All Hotels"}{" "}
+            - Review Analytics
+          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-purple-600" />
+              <MultiSelect
+                options={otaPlatforms}
+                selected={otaFilter}
+                onChange={(selected) => setOtaFilter(selected as OTAFilter[])}
+                placeholder="Select OTAs"
+              />
             </div>
-          </div>
-          <div className="filter-group">
-            <select
+            <Select
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as DateRangeFilter)}
-              className="filter-select"
+              onValueChange={(value) => setDateRange(value as DateRangeFilter)}
             >
-              <option value="all">All Time</option>
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-              <option value="3months">Last 3 Months</option>
-              <option value="6months">Last 6 Months</option>
-            </select>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select date range" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="7days">Last 7 Days</SelectItem>
+                <SelectItem value="30days">Last 30 Days</SelectItem>
+                <SelectItem value="3months">Last 3 Months</SelectItem>
+                <SelectItem value="6months">Last 6 Months</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </header>
 
-      <div className="stats-grid">
-        <StatCard
-          title="Rating"
-          value={`${averageSeverity.toFixed(2)}/10`}
-          icon={FaStar}
-          color="#FFCE56"
-        />
-        <StatCard
-          title="Total Reviews"
-          value={filteredData.length}
-          icon={FaChartPie}
-          color="#9966FF"
-        />
-        <StatCard
-          title="Positive"
-          value={goodCount}
-          icon={FaRegSmile}
-          color="#4caf50"
-        />
-        <StatCard
-          title="Negative"
-          value={badCount}
-          icon={FaRegFrown}
-          color="#f44336"
-        />
-      </div>
-
-      <div className="main-content">
-        <div className="chart-row">
-          <ChartCard title="Review Distribution" className="pie-chart">
-            <Doughnut
-              data={pieData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: "right",
-                  },
-                },
-              }}
-            />
-          </ChartCard>
-          <ChartCard title="Reviews per OTA Platform" className="bar-chart">
-            <Bar
-              data={{
-                labels: severityData.labels,
-                datasets: [
-                  {
-                    label: "Review Count",
-                    data: severityData.data,
-                    backgroundColor: [
-                      "#FF6384",
-                      "#36A2EB",
-                      "#FFCE56",
-                      "#4BC0C0",
-                      "#9966FF",
-                      "#FF9F40",
-                      "#E7E9ED",
-                      "#C9CBCF",
-                    ],
-                    borderRadius: 4,
-                  },
-                ],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      display: false,
-                    },
-                    ticks: {
-                      stepSize: 1,
-                    },
-                  },
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: (context) => {
-                        return `Reviews: ${context.parsed.y}`;
-                      },
-                    },
-                  },
-                },
-              }}
-            />
-          </ChartCard>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            title="Rating"
+            value={`${averageSeverity.toFixed(2)}/10`}
+            icon={Star}
+            color="#FFCE56"
+          />
+          <StatCard
+            title="Total Reviews"
+            value={filteredData.length}
+            icon={BarChart3}
+            color="#9966FF"
+          />
+          <StatCard
+            title="Positive"
+            value={goodCount}
+            icon={Smile}
+            color="#4caf50"
+          />
+          <StatCard
+            title="Negative"
+            value={badCount}
+            icon={Frown}
+            color="#f44336"
+          />
         </div>
 
-        <div className="chart-row">
-          <ChartCard title="Areas of Inconvenience" className="full-width">
-            <Bar
-              data={areaChartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: "x",
-                scales: {
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  y: {
-                    beginAtZero: true,
-                    grid: {
-                      display: false,
-                    },
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: false,
-                  },
-                },
-              }}
-            />
-          </ChartCard>
-        </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Review Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Doughnut
+                    data={pieData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "right",
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-        <div className="chart-row">
-          <ChartCard title="Review Trends Over Time" className="full-width">
-            <Line
-              data={trendsData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                  x: {
-                    grid: {
-                      display: false,
-                    },
-                  },
-                },
-                plugins: {
-                  legend: {
-                    position: "top",
-                  },
-                },
-                elements: {
-                  line: {
-                    tension: 0.4,
-                    borderWidth: 2,
-                  },
-                  point: {
-                    radius: 4,
-                    hoverRadius: 6,
-                  },
-                },
-              }}
-            />
-          </ChartCard>
-        </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Reviews per OTA Platform</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar
+                    data={{
+                      labels: severityData.labels,
+                      datasets: [
+                        {
+                          label: "Review Count",
+                          data: severityData.data,
+                          backgroundColor: [
+                            "#FF6384",
+                            "#36A2EB",
+                            "#FFCE56",
+                            "#4BC0C0",
+                            "#9966FF",
+                            "#FF9F40",
+                            "#E7E9ED",
+                            "#C9CBCF",
+                          ],
+                          borderRadius: 4,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            display: false,
+                          },
+                          ticks: {
+                            stepSize: 1,
+                          },
+                        },
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                        },
+                      },
+                      plugins: {
+                        legend: {
+                          display: false,
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => {
+                              return `Reviews: ${context.parsed.y}`;
+                            },
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <div className="chart-row">
-          <ChartCard title="Severity Score Over Time" className="full-width">
-            <Scatter
-              data={scatterData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: "top" as const,
-                  },
-                  tooltip: {
-                    callbacks: {
-                      title: (context) => {
-                        const date = new Date(context[0].parsed.x);
-                        return date.toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        });
+          <Card>
+            <CardHeader>
+              <CardTitle>Areas of Inconvenience</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <Bar
+                  data={areaChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: "x",
+                    scales: {
+                      x: {
+                        grid: {
+                          display: false,
+                        },
                       },
-                      label: (context) => {
-                        return `Severity Score: ${context.parsed.y}`;
-                      },
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    type: "time" as const,
-                    time: {
-                      unit: "day",
-                      displayFormats: {
-                        day: "MMM dd, yyyy",
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          display: false,
+                        },
                       },
                     },
-                    grid: {
-                      display: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
                     },
-                  },
-                  y: {
-                    beginAtZero: true,
-                    max: 11,
-                    grid: {
-                      display: false,
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Review Trends Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <Line
+                  data={trendsData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        grid: {
+                          display: false,
+                        },
+                      },
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                      },
                     },
-                  },
-                },
-              }}
-            />
-          </ChartCard>
+                    plugins: {
+                      legend: {
+                        position: "top",
+                      },
+                    },
+                    elements: {
+                      line: {
+                        tension: 0.4,
+                        borderWidth: 2,
+                      },
+                      point: {
+                        radius: 4,
+                        hoverRadius: 6,
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Severity Score Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <Scatter
+                  data={scatterData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: "top" as const,
+                      },
+                      tooltip: {
+                        callbacks: {
+                          title: (context) => {
+                            const date = new Date(context[0].parsed.x);
+                            return date.toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            });
+                          },
+                          label: (context) => {
+                            return `Severity Score: ${context.parsed.y}`;
+                          },
+                        },
+                      },
+                    },
+                    scales: {
+                      x: {
+                        type: "time" as const,
+                        time: {
+                          unit: "day",
+                          displayFormats: {
+                            day: "MMM dd, yyyy",
+                          },
+                        },
+                        grid: {
+                          display: false,
+                        },
+                      },
+                      y: {
+                        beginAtZero: true,
+                        max: 11,
+                        grid: {
+                          display: false,
+                        },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

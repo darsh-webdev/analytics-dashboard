@@ -3,7 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { reviewData } from "../data/dummyData";
 import type { Review, OTAFilter, DateRangeFilter } from "../types";
 import { AREA_CATEGORIES } from "../types";
-import { ArrowLeft, Star, Smile, Frown, BarChart3, Filter } from "lucide-react";
+import { ArrowLeft, Star, Smile, Frown, BarChart3, Filter, Moon, Sun } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
+import { Switch } from "@/components/ui/switch";
 
 import {
   Chart as ChartJS,
@@ -130,6 +132,7 @@ export default function Dashboard() {
   const { hotelName } = useParams<{ hotelName: string }>();
   const [otaFilter, setOtaFilter] = useState<OTAFilter[]>(["All"]);
   const [dateRange, setDateRange] = useState<DateRangeFilter>("all");
+  const { theme, toggleTheme } = useTheme();
 
   const otaPlatforms: OTAFilter[] = useMemo(
     () => [
@@ -313,17 +316,28 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <Button asChild variant="ghost" className="mb-4 hover:bg-purple-50">
-          <Link to="/" className="flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button asChild variant="ghost" className="hover:bg-accent">
+            <Link to="/" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Link>
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Sun className="h-4 w-4" />
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={toggleTheme}
+            />
+            <Moon className="h-4 w-4" />
+          </div>
+        </div>
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-4 border-b">
-          <h1 className="text-3xl font-bold text-gray-900">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-4 border-b border-border">
+          <h1 className="text-3xl font-bold text-foreground">
             {hotelName && hotelName.toLowerCase() !== "all"
               ? `${
                   hotelName.charAt(0).toUpperCase() + hotelName.slice(1)

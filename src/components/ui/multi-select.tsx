@@ -54,18 +54,20 @@ export function MultiSelect({
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
-          className="w-[200px] p-0 bg-white border rounded-md shadow-md z-50"
+          className="PopoverContent w-[200px] p-0 bg-popover text-popover-foreground border border-border rounded-md shadow-md z-50"
           align="start"
+          sideOffset={4}
         >
           <div className="max-h-[300px] overflow-y-auto p-1">
             {options.map((option) => (
               <label
                 key={option}
-                className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-accent rounded-sm transition-colors"
+                className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm transition-colors"
               >
                 <Checkbox
                   checked={selected.includes(option)}
                   onCheckedChange={() => handleToggle(option)}
+                  className="text-primary"
                 />
                 <span className="text-sm flex-1">{option}</span>
               </label>

@@ -3,7 +3,16 @@ import { useParams, Link } from "react-router-dom";
 import { reviewData } from "../data/dummyData";
 import type { Review, OTAFilter, DateRangeFilter } from "../types";
 import { AREA_CATEGORIES } from "../types";
-import { ArrowLeft, Star, Smile, Frown, BarChart3, Filter, Moon, Sun } from "lucide-react";
+import {
+  ArrowLeft,
+  Star,
+  Smile,
+  Frown,
+  BarChart3,
+  Filter,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { Switch } from "@/components/ui/switch";
 
@@ -325,13 +334,10 @@ export default function Dashboard() {
               Back to Home
             </Link>
           </Button>
-          
+
           <div className="flex items-center gap-2">
             <Sun className="h-4 w-4" />
-            <Switch
-              checked={theme === "dark"}
-              onCheckedChange={toggleTheme}
-            />
+            <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
             <Moon className="h-4 w-4" />
           </div>
         </div>
@@ -362,12 +368,22 @@ export default function Dashboard() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select date range" />
               </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="7days">Last 7 Days</SelectItem>
-                <SelectItem value="30days">Last 30 Days</SelectItem>
-                <SelectItem value="3months">Last 3 Months</SelectItem>
-                <SelectItem value="6months">Last 6 Months</SelectItem>
+              <SelectContent className="SelectContent bg-popover text-popover-foreground border-border">
+                <SelectItem value="all" className="SelectItem">
+                  All Time
+                </SelectItem>
+                <SelectItem value="7days" className="SelectItem">
+                  Last 7 Days
+                </SelectItem>
+                <SelectItem value="30days" className="SelectItem">
+                  Last 30 Days
+                </SelectItem>
+                <SelectItem value="3months" className="SelectItem">
+                  Last 3 Months
+                </SelectItem>
+                <SelectItem value="6months" className="SelectItem">
+                  Last 6 Months
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

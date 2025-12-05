@@ -1,23 +1,17 @@
 export interface Review {
+  reviewId: string;
+  rating: number;
   date: string;
-  category: "Positive" | "Negative";
+  category: "POSITIVE" | "NEGATIVE";
   severityScore: number;
-  areaOfInconvenience: string[];
+  areaOfInconvenience: AreaCategory[];
+  areaOfBenefits: AreaCategory[];
   OTA: string;
   hotelName: string;
   response?: boolean;
 }
 
-export type OTAFilter =
-  | "All"
-  | "Booking.com"
-  | "TripAdvisor"
-  | "Expedia"
-  | "Hotels.com"
-  | "Agoda"
-  | "Airbnb"
-  | "MakeMyTrip"
-  | "Goibibo";
+export type OTAFilter = "ALL" | "BOOKING_COM" | "GOOGLE_REVIEWS" | "EXPEDIA";
 
 export type DateRangeFilter =
   | "all"
@@ -27,17 +21,21 @@ export type DateRangeFilter =
   | "6months";
 
 export const AREA_CATEGORIES = [
-  "Rooms",
-  "Comfort",
-  "Food",
-  "Staff service",
-  "Location",
-  "Hotel Service",
-  "Sleep Quality",
-  "Parking",
-  "Space Utilization",
-  "Ambience",
-  "Cleanliness",
+  "rooms",
+  "comfort",
+  "food",
+  "staff service",
+  "location",
+  "hotel service",
+  "check-in/out",
+  "parking",
+  "amenities",
+  "ambience",
+  "cleanliness",
+  "pool",
+  "spa",
+  "pricing",
+  "others",
 ] as const;
 
 export type AreaCategory = (typeof AREA_CATEGORIES)[number];

@@ -87,12 +87,9 @@ function severityByDate(data: Review[]) {
 }
 
 function groupByDateAndCategory(data: Review[]) {
-  const res: Record<
-    string,
-    { Positive: number; Neutral: number; Negative: number }
-  > = {};
+  const res: Record<string, { POSITIVE: number; NEGATIVE: number }> = {};
   data.forEach(({ date, category }) => {
-    if (!res[date]) res[date] = { Positive: 0, Neutral: 0, Negative: 0 };
+    if (!res[date]) res[date] = { POSITIVE: 0, NEGATIVE: 0 };
     res[date][category]++;
   });
   return res;
@@ -139,22 +136,12 @@ function filterByDateRange(data: Review[], range: string) {
 
 export default function Dashboard() {
   const { hotelName } = useParams<{ hotelName: string }>();
-  const [otaFilter, setOtaFilter] = useState<OTAFilter[]>(["All"]);
+  const [otaFilter, setOtaFilter] = useState<OTAFilter[]>(["ALL"]);
   const [dateRange, setDateRange] = useState<DateRangeFilter>("all");
   const { theme, toggleTheme } = useTheme();
 
   const otaPlatforms: OTAFilter[] = useMemo(
-    () => [
-      "All",
-      "Booking.com",
-      "TripAdvisor",
-      "Expedia",
-      "Hotels.com",
-      "Agoda",
-      "Airbnb",
-      "MakeMyTrip",
-      "Goibibo",
-    ],
+    () => ["ALL", "BOOKING_COM", "GOOGLE_REVIEWS", "EXPEDIA"],
     []
   );
 
@@ -168,7 +155,7 @@ export default function Dashboard() {
       );
     }
 
-    if (!otaFilter.includes("All")) {
+    if (!otaFilter.includes("ALL")) {
       data = data.filter((r) => otaFilter.includes(r.OTA as OTAFilter));
     }
 
@@ -191,14 +178,14 @@ export default function Dashboard() {
       datasets: [
         {
           label: "Positive",
-          data: sortedDates.map((date) => grouped[date].Positive),
+          data: sortedDates.map((date) => grouped[date].POSITIVE),
           borderColor: "#4caf50",
           backgroundColor: "rgba(76, 175, 80, 0.1)",
           fill: false,
         },
         {
           label: "Negative",
-          data: sortedDates.map((date) => grouped[date].Negative),
+          data: sortedDates.map((date) => grouped[date].NEGATIVE),
           borderColor: "#f44336",
           backgroundColor: "rgba(244, 67, 54, 0.1)",
           fill: false,
@@ -208,8 +195,8 @@ export default function Dashboard() {
   }, [filteredData]);
 
   const severityData = useMemo(() => {
-    const selectedOTAs = otaFilter.includes("All")
-      ? otaPlatforms.filter((ota) => ota !== "All")
+    const selectedOTAs = otaFilter.includes("ALL")
+      ? otaPlatforms.filter((ota) => ota !== "ALL")
       : otaFilter;
 
     const otaCounts: Record<string, number> = {};
@@ -223,18 +210,18 @@ export default function Dashboard() {
     };
   }, [filteredData, otaFilter, otaPlatforms]);
 
-  const areaCounts = useMemo(
+  const areaOfInconvenienceCounts = useMemo(
     () => countByAreaOfInconvenience(filteredData),
     [filteredData]
   );
 
   const areaChartData = useMemo(() => {
     return {
-      labels: Object.keys(areaCounts),
+      labels: Object.keys(areaOfInconvenienceCounts),
       datasets: [
         {
           label: "Count",
-          data: Object.values(areaCounts),
+          data: Object.values(areaOfInconvenienceCounts),
           backgroundColor: [
             "#FF6384",
             "#36A2EB",
@@ -250,7 +237,7 @@ export default function Dashboard() {
         },
       ],
     };
-  }, [areaCounts]);
+  }, [areaOfInconvenienceCounts]);
 
   const pieData = useMemo(
     () => ({
@@ -266,10 +253,10 @@ export default function Dashboard() {
   );
 
   const goodCount = filteredData.filter(
-    (r) => r.category === "Positive"
+    (r) => r.category === "POSITIVE"
   ).length;
 
-  const badCount = filteredData.filter((r) => r.category === "Negative").length;
+  const badCount = filteredData.filter((r) => r.category === "NEGATIVE").length;
 
   const averageSeverity =
     filteredData.reduce((acc, review) => acc + review.severityScore, 0) /

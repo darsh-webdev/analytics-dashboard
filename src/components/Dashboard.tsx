@@ -110,6 +110,21 @@ function countByAreaOfInconvenience(data: Review[]) {
   return map;
 }
 
+function countByAreaOfBenefit(data: Review[]) {
+  const map: Record<string, number> = {};
+  AREA_CATEGORIES.forEach((area) => (map[area] = 0));
+
+  data.forEach(({ areaOfBenefits }) => {
+    areaOfBenefits.forEach((area) => {
+      const areaCategories = AREA_CATEGORIES as readonly string[];
+      if (areaCategories.includes(area)) {
+        map[area] = (map[area] || 0) + 1;
+      }
+    });
+  });
+  return map;
+}
+
 function filterByDateRange(data: Review[], range: string) {
   const now = new Date();
   const cutoffDate = new Date();
@@ -215,7 +230,12 @@ export default function Dashboard() {
     [filteredData]
   );
 
-  const areaChartData = useMemo(() => {
+  const areaOfBenefitsCounts = useMemo(
+    () => countByAreaOfBenefit(filteredData),
+    [filteredData]
+  );
+
+  const areaOfInconvenienceChartData = useMemo(() => {
     return {
       labels: Object.keys(areaOfInconvenienceCounts),
       datasets: [
@@ -238,6 +258,30 @@ export default function Dashboard() {
       ],
     };
   }, [areaOfInconvenienceCounts]);
+
+  const areaOfBenefitChartData = useMemo(() => {
+    return {
+      labels: Object.keys(areaOfBenefitsCounts),
+      datasets: [
+        {
+          label: "Count",
+          data: Object.values(areaOfBenefitsCounts),
+          backgroundColor: [
+            "#FF6384",
+            "#36A2EB",
+            "#FFCE56",
+            "#4BC0C0",
+            "#9966FF",
+            "#FF9F40",
+            "#FF6384",
+            "#C9CBCF",
+            "#4BC0C0",
+          ],
+          borderRadius: 4,
+        },
+      ],
+    };
+  }, [areaOfBenefitsCounts]);
 
   const pieData = useMemo(
     () => ({
@@ -499,7 +543,43 @@ export default function Dashboard() {
             <CardContent>
               <div className="h-[300px]">
                 <Bar
-                  data={areaChartData}
+                  data={areaOfInconvenienceChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: "x",
+                    scales: {
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                      },
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          display: false,
+                        },
+                      },
+                    },
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Areas of Benefit</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <Bar
+                  data={areaOfBenefitChartData}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,

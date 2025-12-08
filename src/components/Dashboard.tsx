@@ -95,6 +95,20 @@ function groupByDateAndCategory(data: Review[]) {
   return res;
 }
 
+function countByRating(data: Review[]) {
+  const map: Record<number, number> = {};
+  for (let i = 1; i <= 10; i++) {
+    map[i] = 0;
+  }
+
+  data.forEach(({ severityScore }) => {
+    if (severityScore >= 1 && severityScore <= 10) {
+      map[severityScore] = (map[severityScore] || 0) + 1;
+    }
+  });
+  return map;
+}
+
 function countByAreaOfInconvenience(data: Review[]) {
   const map: Record<string, number> = {};
   AREA_CATEGORIES.forEach((area) => (map[area] = 0));
@@ -235,13 +249,23 @@ export default function Dashboard() {
     [filteredData]
   );
 
+  const ratingCounts = useMemo(
+    () => countByRating(filteredData),
+    [filteredData]
+  );
+
   const areaOfInconvenienceChartData = useMemo(() => {
+    const sortedEntries = Object.entries(areaOfInconvenienceCounts).sort(
+      (a, b) => b[1] - a[1]
+    );
+    const labels = sortedEntries.map(([label]) => label);
+    const data = sortedEntries.map(([, value]) => value);
     return {
-      labels: Object.keys(areaOfInconvenienceCounts),
+      labels,
       datasets: [
         {
           label: "Count",
-          data: Object.values(areaOfInconvenienceCounts),
+          data,
           backgroundColor: [
             "#FF6384",
             "#36A2EB",
@@ -260,12 +284,17 @@ export default function Dashboard() {
   }, [areaOfInconvenienceCounts]);
 
   const areaOfBenefitChartData = useMemo(() => {
+    const sortedEntries = Object.entries(areaOfBenefitsCounts).sort(
+      (a, b) => b[1] - a[1]
+    );
+    const labels = sortedEntries.map(([label]) => label);
+    const data = sortedEntries.map(([, value]) => value);
     return {
-      labels: Object.keys(areaOfBenefitsCounts),
+      labels,
       datasets: [
         {
           label: "Count",
-          data: Object.values(areaOfBenefitsCounts),
+          data,
           backgroundColor: [
             "#FF6384",
             "#36A2EB",
@@ -527,6 +556,73 @@ export default function Dashboard() {
                               return `Reviews: ${context.parsed.y}`;
                             },
                           },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Rating Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar
+                    data={{
+                      labels: Object.keys(ratingCounts),
+                      datasets: [
+                        {
+                          label: "Number of Reviews",
+                          data: Object.values(ratingCounts),
+                          backgroundColor: [
+                            "#f44336",
+                            "#e53935",
+                            "#ff5722",
+                            "#ff9800",
+                            "#ffc107",
+                            "#ffeb3b",
+                            "#cddc39",
+                            "#8bc34a",
+                            "#4caf50",
+                            "#2e7d32",
+                          ],
+                          borderRadius: 4,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            display: false,
+                          },
+                          ticks: {
+                            stepSize: 1,
+                          },
+                          title: {
+                            display: true,
+                            text: "Number of Reviews",
+                          },
+                        },
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                          title: {
+                            display: true,
+                            text: "Rating (1-10)",
+                          },
+                        },
+                      },
+                      plugins: {
+                        legend: {
+                          display: false,
                         },
                       },
                     }}

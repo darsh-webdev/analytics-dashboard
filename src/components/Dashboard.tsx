@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { reviewData } from "../data/dummyData";
-import type { Review, OTAFilter, DateRangeFilter } from "../types";
+import type {
+  Review,
+  OTAFilter,
+  DateRangeFilter,
+  AreaCategory,
+} from "../types";
 import { AREA_CATEGORIES } from "../types";
 import {
   ArrowLeft,
@@ -72,6 +77,48 @@ interface StatCardProps {
 }
 
 // Helper functions
+function getBucketKeyAndDate(date: Date, range: DateRangeFilter) {
+  const d = new Date(date);
+
+  if (range === "30days") {
+    const key = d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const bd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return { key, bucketDate: bd };
+  }
+
+  if (range === "3months" || range === "6months") {
+    const day = d.getDay();
+    const daysSinceMonday = (day + 6) % 7;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - daysSinceMonday);
+    const weekEnd = new Date(
+      monday.getFullYear(),
+      monday.getMonth(),
+      monday.getDate() + 6
+    );
+    const key =
+      monday.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+      " - " +
+      weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const bd = new Date(
+      monday.getFullYear(),
+      monday.getMonth(),
+      monday.getDate()
+    );
+    return { key, bucketDate: bd };
+  }
+
+  const key = d.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+  const bd = new Date(d.getFullYear(), d.getMonth(), 1);
+  return { key, bucketDate: bd };
+}
+
 function groupByCategory(data: Review[]) {
   return data.reduce((acc: Record<string, number>, { category }) => {
     acc[category] = (acc[category] || 0) + 1;
@@ -139,6 +186,46 @@ function countByAreaOfBenefit(data: Review[]) {
   return map;
 }
 
+function groupCategoryTrendsByRange(
+  reviews: Review[],
+  range: DateRangeFilter,
+  category: AreaCategory
+) {
+  const buckets: Record<
+    string,
+    { bucketDate: Date; inconvenience: number; benefit: number }
+  > = {};
+
+  reviews.forEach((r) => {
+    const reviewDate = new Date(r.date);
+    const { key, bucketDate } = getBucketKeyAndDate(reviewDate, range);
+
+    if (!buckets[key]) {
+      buckets[key] = {
+        bucketDate,
+        inconvenience: 0,
+        benefit: 0,
+      };
+    }
+
+    // Check if this category is in areas of inconvenience
+    if (r.areaOfInconvenience && r.areaOfInconvenience.includes(category)) {
+      buckets[key].inconvenience += 1;
+    }
+
+    // Check if this category is in areas of benefits
+    if (r.areaOfBenefits && r.areaOfBenefits.includes(category)) {
+      buckets[key].benefit += 1;
+    }
+  });
+
+  const sorted = Object.entries(buckets)
+    .map(([label, val]) => ({ label, ...val }))
+    .sort((a, b) => a.bucketDate.getTime() - b.bucketDate.getTime());
+
+  return sorted;
+}
+
 function filterByDateRange(data: Review[], range: string) {
   const now = new Date();
   const cutoffDate = new Date();
@@ -167,6 +254,9 @@ export default function Dashboard() {
   const { hotelName } = useParams<{ hotelName: string }>();
   const [otaFilter, setOtaFilter] = useState<OTAFilter[]>(["ALL"]);
   const [dateRange, setDateRange] = useState<DateRangeFilter>("all");
+  const [selectedCategory, setSelectedCategory] = useState<AreaCategory>(
+    AREA_CATEGORIES[0]
+  );
   const { theme, toggleTheme } = useTheme();
 
   const otaPlatforms: OTAFilter[] = useMemo(
@@ -350,6 +440,43 @@ export default function Dashboard() {
     }),
     [filteredData]
   );
+
+  const categoryTrendData = useMemo(() => {
+    const groupedByRange = groupCategoryTrendsByRange(
+      filteredData,
+      dateRange,
+      selectedCategory
+    );
+    const labels = groupedByRange.map((g) => g.label);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: `${selectedCategory} - Inconvenience`,
+          data: groupedByRange.map((g) => g.inconvenience),
+          borderColor: "#f44336",
+          backgroundColor: "rgba(244, 67, 54, 0.1)",
+          fill: false,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 3,
+        },
+        {
+          label: `${selectedCategory} - Benefit`,
+          data: groupedByRange.map((g) => g.benefit),
+          borderColor: "#4caf50",
+          backgroundColor: "rgba(76, 175, 80, 0.1)",
+          fill: false,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 3,
+        },
+      ],
+    };
+  }, [filteredData, dateRange, selectedCategory]);
 
   // Card component for better organization
   const StatCard = ({
@@ -802,6 +929,126 @@ export default function Dashboard() {
                     },
                   }}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle>Category Trend Over Time</CardTitle>
+              <Select
+                value={selectedCategory as AreaCategory}
+                onValueChange={(value) =>
+                  setSelectedCategory(value as AreaCategory)
+                }
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AREA_CATEGORIES.map((category: AreaCategory) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px]">
+                <Line
+                  data={categoryTrendData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          display: true,
+                          color:
+                            theme === "dark"
+                              ? "rgba(255,255,255,0.1)"
+                              : "rgba(0,0,0,0.1)",
+                        },
+                        title: {
+                          display: true,
+                          text: "Number of Mentions",
+                        },
+                        ticks: {
+                          stepSize: 1,
+                        },
+                      },
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                        title: {
+                          display: true,
+                          text: "Time Period",
+                        },
+                      },
+                    },
+                    plugins: {
+                      legend: {
+                        position: "top",
+                        labels: {
+                          boxWidth: 15,
+                          padding: 15,
+                          font: {
+                            size: 12,
+                          },
+                          usePointStyle: true,
+                        },
+                      },
+                      tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        callbacks: {
+                          title: (context) => {
+                            return context[0].label;
+                          },
+                          label: (context) => {
+                            const label = context.dataset.label || "";
+                            const value = context.parsed.y;
+                            return `${label}: ${value} mention${
+                              value !== 1 ? "s" : ""
+                            }`;
+                          },
+                          afterLabel: (context) => {
+                            const dataIndex = context.dataIndex;
+                            const groupedByRange = groupCategoryTrendsByRange(
+                              filteredData,
+                              dateRange,
+                              selectedCategory
+                            );
+                            const bucket = groupedByRange[dataIndex];
+                            const total = bucket.inconvenience + bucket.benefit;
+
+                            if (total === 0) return "";
+
+                            const value = context.parsed.y;
+                            const percentage = ((value / total) * 100).toFixed(
+                              1
+                            );
+                            return `(${percentage}% of ${selectedCategory} mentions)`;
+                          },
+                        },
+                      },
+                    },
+                    interaction: {
+                      mode: "nearest",
+                      axis: "x",
+                      intersect: false,
+                    },
+                  }}
+                />
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground text-center">
+                <p>
+                  Track how "{selectedCategory}" is perceived over time - as an
+                  concern (red) or appreciation (green)
+                </p>
               </div>
             </CardContent>
           </Card>

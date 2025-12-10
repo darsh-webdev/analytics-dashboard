@@ -133,13 +133,55 @@ function severityByDate(data: Review[]) {
   }));
 }
 
-function groupByDateAndCategory(data: Review[]) {
-  const res: Record<string, { POSITIVE: number; NEGATIVE: number }> = {};
-  data.forEach(({ date, category }) => {
-    if (!res[date]) res[date] = { POSITIVE: 0, NEGATIVE: 0 };
-    res[date][category]++;
+function groupRatingTrendsByRange(reviews: Review[], range: DateRangeFilter) {
+  const buckets: Record<
+    string,
+    {
+      bucketDate: Date;
+      ratingCounts: Record<number, number>;
+      totalRatingSum: number;
+      totalCount: number;
+    }
+  > = {};
+  //                                                                                      ^ New fields added
+
+  reviews.forEach((r) => {
+    const reviewDate = new Date(r.date);
+    const { key, bucketDate } = getBucketKeyAndDate(reviewDate, range);
+
+    if (!buckets[key]) {
+      buckets[key] = {
+        bucketDate,
+        ratingCounts: {},
+        totalRatingSum: 0, // Initialize
+        totalCount: 0, // Initialize
+      };
+    }
+
+    const rating = r.severityScore;
+    if (rating >= 1 && rating <= 10) {
+      // Update rating counts
+      buckets[key].ratingCounts[rating] =
+        (buckets[key].ratingCounts[rating] || 0) + 1;
+
+      // Update new fields for average calculation
+      buckets[key].totalRatingSum += rating;
+      buckets[key].totalCount += 1;
+    }
   });
-  return res;
+
+  // Calculate the average severity score for each bucket
+  const sorted = Object.entries(buckets)
+    .map(([label, val]) => ({
+      label,
+      ...val,
+      // Calculate the average only if totalCount is greater than 0
+      averageSeverity:
+        val.totalCount > 0 ? val.totalRatingSum / val.totalCount : 0,
+    }))
+    .sort((a, b) => a.bucketDate.getTime() - b.bucketDate.getTime());
+
+  return sorted;
 }
 
 function countByRating(data: Review[]) {
@@ -290,27 +332,56 @@ export default function Dashboard() {
   );
 
   const trendsData = useMemo(() => {
-    const grouped = groupByDateAndCategory(filteredData);
-    const sortedDates = Object.keys(grouped).sort();
-    return {
-      labels: sortedDates,
-      datasets: [
-        {
-          label: "Positive",
-          data: sortedDates.map((date) => grouped[date].POSITIVE),
-          borderColor: "#4caf50",
-          backgroundColor: "rgba(76, 175, 80, 0.1)",
-          fill: false,
-        },
-        {
-          label: "Negative",
-          data: sortedDates.map((date) => grouped[date].NEGATIVE),
-          borderColor: "#f44336",
-          backgroundColor: "rgba(244, 67, 54, 0.1)",
-          fill: false,
-        },
-      ],
-    };
+    const groupedByRange = groupRatingTrendsByRange(filteredData, dateRange);
+    const labels = groupedByRange.map((g) => g.label);
+
+    // Create a dataset for each rating (1-10)
+    const datasets = [];
+    // Separate colors for individual ratings
+    const ratingColors = [
+      "#f44336",
+      "#e53935",
+      "#ff5722",
+      "#ff9800",
+      "#ffc107",
+      "#ffeb3b",
+      "#cddc39",
+      "#8bc34a",
+      "#4caf50",
+      "#2e7d32",
+    ];
+
+    for (let rating = 1; rating <= 10; rating++) {
+      datasets.push({
+        label: `Severity Rating ${rating}`,
+        data: groupedByRange.map((g) => g.ratingCounts[rating] || 0),
+        borderColor: ratingColors[rating - 1],
+        backgroundColor: ratingColors[rating - 1],
+        fill: false,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        hidden: false, // You might want to hide individual lines by default
+      });
+    }
+
+    // --- ADDITION FOR AVERAGE TREND LINE ---
+    const averageSeverityData = groupedByRange.map((g) => g.averageSeverity);
+
+    datasets.push({
+      label: "Average Severity Trend",
+      data: averageSeverityData,
+      borderColor: "#6F66E7",
+      backgroundColor: "#6F66E7",
+      borderWidth: 3,
+      fill: false,
+      tension: 0.4,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+    });
+    // ----------------------------------------
+
+    return { labels, datasets };
   }, [filteredData]);
 
   const severityData = useMemo(() => {
@@ -833,7 +904,7 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Review Trends Over Time</CardTitle>
+              <CardTitle>Rating Trends Over Time</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">

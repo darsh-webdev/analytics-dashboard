@@ -37,7 +37,7 @@ import {
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 
-import { Bar, Doughnut, Line, Scatter } from "react-chartjs-2";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -124,13 +124,6 @@ function groupByCategory(data: Review[]) {
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
-}
-
-function severityByDate(data: Review[]) {
-  return data.map((review) => ({
-    x: review.date,
-    y: review.severityScore,
-  }));
 }
 
 function groupRatingTrendsByRange(reviews: Review[], range: DateRangeFilter) {
@@ -382,7 +375,7 @@ export default function Dashboard() {
     // ----------------------------------------
 
     return { labels, datasets };
-  }, [filteredData]);
+  }, [filteredData, dateRange]);
 
   const severityData = useMemo(() => {
     const selectedOTAs = otaFilter.includes("ALL")
@@ -495,22 +488,6 @@ export default function Dashboard() {
   const averageSeverity =
     filteredData.reduce((acc, review) => acc + review.severityScore, 0) /
     filteredData.length;
-
-  const scatterData = useMemo(
-    () => ({
-      datasets: [
-        {
-          label: "Severity Score",
-          data: severityByDate(filteredData),
-          backgroundColor: "rgba(75, 192, 192, 0.6)",
-          borderColor: "rgba(75, 192, 192, 1)",
-          pointRadius: 5,
-          pointHoverRadius: 7,
-        },
-      ],
-    }),
-    [filteredData]
-  );
 
   const categoryTrendData = useMemo(() => {
     const groupedByRange = groupCategoryTrendsByRange(
@@ -938,64 +915,6 @@ export default function Dashboard() {
                       point: {
                         radius: 4,
                         hoverRadius: 6,
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Severity Score Over Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Scatter
-                  data={scatterData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: "top" as const,
-                      },
-                      tooltip: {
-                        callbacks: {
-                          title: (context) => {
-                            const date = new Date(context[0].parsed.x);
-                            return date.toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            });
-                          },
-                          label: (context) => {
-                            return `Severity Score: ${context.parsed.y}`;
-                          },
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        type: "time" as const,
-                        time: {
-                          unit: "day",
-                          displayFormats: {
-                            day: "MMM dd, yyyy",
-                          },
-                        },
-                        grid: {
-                          display: false,
-                        },
-                      },
-                      y: {
-                        beginAtZero: true,
-                        max: 11,
-                        grid: {
-                          display: false,
-                        },
                       },
                     },
                   }}

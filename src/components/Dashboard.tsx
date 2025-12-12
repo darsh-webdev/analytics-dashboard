@@ -738,74 +738,75 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Rating Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <Bar
-                    data={{
-                      labels: Object.keys(ratingCounts),
-                      datasets: [
-                        {
-                          label: "Number of Reviews",
-                          data: Object.values(ratingCounts),
-                          backgroundColor: [
-                            "#f44336",
-                            "#e53935",
-                            "#ff5722",
-                            "#ff9800",
-                            "#ffc107",
-                            "#ffeb3b",
-                            "#cddc39",
-                            "#8bc34a",
-                            "#4caf50",
-                            "#2e7d32",
-                          ],
-                          borderRadius: 4,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            display: false,
-                          },
-                          ticks: {
-                            stepSize: 1,
-                          },
-                          title: {
-                            display: true,
-                            text: "Number of Reviews",
-                          },
-                        },
-                        x: {
-                          grid: {
-                            display: false,
-                          },
-                          title: {
-                            display: true,
-                            text: "Rating (1-10)",
-                          },
-                        },
+          <Card>
+            <CardHeader>
+              <CardTitle>Severity Rating Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <Bar
+                  data={{
+                    labels: Object.keys(ratingCounts),
+                    datasets: [
+                      {
+                        label: "Severity Rating (1-10)",
+                        data: Object.values(ratingCounts),
+                        backgroundColor: [
+                          "#f44336",
+                          "#e53935",
+                          "#ff5722",
+                          "#ff9800",
+                          "#ffc107",
+                          "#ffeb3b",
+                          "#cddc39",
+                          "#8bc34a",
+                          "#4caf50",
+                          "#2e7d32",
+                        ],
+                        borderRadius: 4,
                       },
-                      plugins: {
-                        legend: {
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: "y",
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
                           display: false,
                         },
+                        ticks: {
+                          stepSize: 1,
+                        },
+                        title: {
+                          display: true,
+                          text: "Severity Rating (1-10)",
+                        },
                       },
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                        title: {
+                          display: true,
+                          text: "Number of Reviews",
+                        },
+                      },
+                    },
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

@@ -261,6 +261,57 @@ function groupCategoryTrendsByRange(
   return sorted;
 }
 
+function groupReviewsByRangeIgnoreNeutrals(
+  reviews: Review[],
+  range: DateRangeFilter
+) {
+  const buckets: Record<
+    string,
+    { bucketDate: Date; positive: number; negative: number; neutral: number }
+  > = {};
+
+  reviews.forEach((r) => {
+    const reviewDate = new Date(r.date);
+    const { key, bucketDate } = getBucketKeyAndDate(reviewDate, range);
+
+    if (!buckets[key])
+      buckets[key] = { bucketDate, positive: 0, negative: 0, neutral: 0 };
+
+    if (r.severityScore >= 6) buckets[key].positive += 1;
+    else if (r.severityScore <= 5) buckets[key].negative += 1;
+    else buckets[key].neutral += 1;
+  });
+
+  const sorted = Object.entries(buckets)
+    .map(([label, val]) => ({ label, ...val }))
+    .sort((a, b) => a.bucketDate.getTime() - b.bucketDate.getTime());
+
+  const labels = sorted.map((s) => s.label);
+  const positiveCounts = sorted.map((s) => s.positive);
+  const negativeCounts = sorted.map((s) => s.negative);
+  const neutrals = sorted.map((s) => s.neutral);
+  const totalPosNeg = sorted.map((s) => s.positive + s.negative);
+
+  const positivePct = sorted.map((s) => {
+    const denom = s.positive + s.negative;
+    return denom > 0 ? (s.positive / denom) * 100 : 0;
+  });
+  const negativePct = sorted.map((s) => {
+    const denom = s.positive + s.negative;
+    return denom > 0 ? (s.negative / denom) * 100 : 0;
+  });
+
+  return {
+    labels,
+    positiveCounts,
+    negativeCounts,
+    neutrals,
+    totalPosNeg,
+    positivePct,
+    negativePct,
+  };
+}
+
 function filterByDateRange(data: Review[], range: string) {
   const now = new Date();
   const cutoffDate = new Date();
@@ -408,6 +459,11 @@ export default function Dashboard() {
     [filteredData]
   );
 
+  const severityByRange = useMemo(
+    () => groupReviewsByRangeIgnoreNeutrals(filteredData, dateRange),
+    [filteredData, dateRange]
+  );
+
   const areaOfInconvenienceChartData = useMemo(() => {
     const sortedEntries = Object.entries(areaOfInconvenienceCounts).sort(
       (a, b) => b[1] - a[1]
@@ -478,6 +534,28 @@ export default function Dashboard() {
     }),
     [categoryCounts]
   );
+
+  const severityBasedChartData = useMemo(() => {
+    return {
+      labels: severityByRange.labels.length
+        ? severityByRange.labels
+        : ["No data"],
+      datasets: [
+        {
+          label: `Positive (Severity ≥ 6)`,
+          data: severityByRange.positivePct,
+          backgroundColor: "#4caf50",
+          stack: "stack1",
+        },
+        {
+          label: `Negative (Severity ≤ 5)`,
+          data: severityByRange.negativePct,
+          backgroundColor: "#f44336",
+          stack: "stack1",
+        },
+      ],
+    };
+  }, [severityByRange]);
 
   const goodCount = filteredData.filter(
     (r) => r.category === "POSITIVE"
@@ -738,75 +816,126 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Severity Rating Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Bar
-                  data={{
-                    labels: Object.keys(ratingCounts),
-                    datasets: [
-                      {
-                        label: "Severity Rating (1-10)",
-                        data: Object.values(ratingCounts),
-                        backgroundColor: [
-                          "#f44336",
-                          "#e53935",
-                          "#ff5722",
-                          "#ff9800",
-                          "#ffc107",
-                          "#ffeb3b",
-                          "#cddc39",
-                          "#8bc34a",
-                          "#4caf50",
-                          "#2e7d32",
-                        ],
-                        borderRadius: 4,
+            <Card>
+              <CardHeader>
+                <CardTitle>Severity Rating Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar
+                    data={{
+                      labels: Object.keys(ratingCounts),
+                      datasets: [
+                        {
+                          label: "Severity Rating (1-10)",
+                          data: Object.values(ratingCounts),
+                          backgroundColor: [
+                            "#f44336",
+                            "#e53935",
+                            "#ff5722",
+                            "#ff9800",
+                            "#ffc107",
+                            "#ffeb3b",
+                            "#cddc39",
+                            "#8bc34a",
+                            "#4caf50",
+                            "#2e7d32",
+                          ],
+                          borderRadius: 4,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      indexAxis: "y",
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            display: false,
+                          },
+                          ticks: {
+                            stepSize: 1,
+                          },
+                          title: {
+                            display: true,
+                            text: "Severity Rating (1-10)",
+                          },
+                        },
+                        x: {
+                          grid: {
+                            display: false,
+                          },
+                          title: {
+                            display: true,
+                            text: "Number of Reviews",
+                          },
+                        },
                       },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: "y",
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: {
+                      plugins: {
+                        legend: {
                           display: false,
                         },
-                        ticks: {
-                          stepSize: 1,
-                        },
-                        title: {
-                          display: true,
-                          text: "Severity Rating (1-10)",
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Review Sentiment by Severity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar
+                    data={severityBasedChartData}
+                    options={{
+                      indexAxis: "x",
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: {
+                          stacked: true,
+                          max: 100,
+                          ticks: { callback: (v: unknown) => `${v}%` },
+                          title: { display: true, text: "Percentage (%)" },
+                          grid: { display: false },
                         },
                       },
-                      x: {
-                        grid: {
-                          display: false,
+                      plugins: {
+                        tooltip: {
+                          callbacks: {
+                            label: (context) => {
+                              const dsIndex = context.datasetIndex ?? 0;
+                              const idx = context.dataIndex ?? 0;
+                              const label = context.dataset.label || "";
+                              const pct =
+                                context.parsed.y ?? context.parsed.x ?? 0;
+                              const abs =
+                                dsIndex === 0
+                                  ? severityByRange.positiveCounts[idx]
+                                  : severityByRange.negativeCounts[idx];
+                              const denom =
+                                severityByRange.totalPosNeg?.[idx] ?? 0;
+                              return `${label}: ${pct.toFixed(
+                                1
+                              )}% (${abs}/${denom})`;
+                            },
+                          },
                         },
-                        title: {
-                          display: true,
-                          text: "Number of Reviews",
-                        },
+                        legend: { position: "bottom" },
                       },
-                    },
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           <Card>
             <CardHeader>

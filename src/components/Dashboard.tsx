@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { Slider } from "./ui/slider";
 
 // Register ChartJS components
 ChartJS.register(
@@ -343,6 +344,7 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState<AreaCategory>(
     AREA_CATEGORIES[0]
   );
+  const [ratingThreshold, setRatingThreshold] = useState<number>(6);
   const { theme, toggleTheme } = useTheme();
 
   const otaPlatforms: OTAFilter[] = useMemo(
@@ -542,26 +544,28 @@ export default function Dashboard() {
         : ["No data"],
       datasets: [
         {
-          label: `Positive (Severity ≥ 6)`,
+          label: `Positive (Severity ≥ ${ratingThreshold})`,
           data: severityByRange.positivePct,
           backgroundColor: "#4caf50",
           stack: "stack1",
         },
         {
-          label: `Negative (Severity ≤ 5)`,
+          label: `Negative (Severity ≤ ${ratingThreshold - 1})`,
           data: severityByRange.negativePct,
           backgroundColor: "#f44336",
           stack: "stack1",
         },
       ],
     };
-  }, [severityByRange]);
+  }, [severityByRange, ratingThreshold]);
 
   const goodCount = filteredData.filter(
-    (r) => r.category === "POSITIVE"
+    (r) => r.severityScore >= ratingThreshold
   ).length;
 
-  const badCount = filteredData.filter((r) => r.category === "NEGATIVE").length;
+  const badCount = filteredData.filter(
+    (r) => r.severityScore < ratingThreshold
+  ).length;
 
   const averageSeverity =
     filteredData.reduce((acc, review) => acc + review.severityScore, 0) /
@@ -665,8 +669,21 @@ export default function Dashboard() {
             - Review Analytics
           </h1>
           <div className="flex flex-wrap items-center gap-3">
+            <Filter className="w-4 h-4 text-purple-600" />
+            <div className="flex flex-col items-start gap-2 w-[200px]">
+              <label className="text-sm font-medium text-muted-foreground">
+                Positive Threshold: {ratingThreshold}/10
+              </label>
+              <Slider
+                min={1}
+                max={10}
+                step={1}
+                value={[ratingThreshold]}
+                onValueChange={([value]) => setRatingThreshold(value)}
+                className="w-full bg-purple-600 rounded-2xl"
+              />
+            </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-purple-600" />
               <MultiSelect
                 options={otaPlatforms}
                 selected={otaFilter}

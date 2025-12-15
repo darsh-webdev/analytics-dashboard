@@ -583,7 +583,7 @@ export default function Dashboard() {
       labels,
       datasets: [
         {
-          label: `${selectedCategory} - Inconvenience`,
+          label: `${selectedCategory} - Concern`,
           data: groupedByRange.map((g) => g.inconvenience),
           borderColor: "#f44336",
           backgroundColor: "rgba(244, 67, 54, 0.1)",
@@ -594,7 +594,7 @@ export default function Dashboard() {
           borderWidth: 3,
         },
         {
-          label: `${selectedCategory} - Benefit`,
+          label: `${selectedCategory} - Appreciation`,
           data: groupedByRange.map((g) => g.benefit),
           borderColor: "#4caf50",
           backgroundColor: "rgba(76, 175, 80, 0.1)",
@@ -956,7 +956,7 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Areas of Inconvenience</CardTitle>
+              <CardTitle>Areas of Concerns</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
@@ -992,7 +992,7 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Areas of Benefit</CardTitle>
+              <CardTitle>Areas of Appreciation</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">

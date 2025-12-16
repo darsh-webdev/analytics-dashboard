@@ -719,477 +719,490 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard
-            title="Rating"
-            value={`${averageSeverity.toFixed(2)}/10`}
-            icon={Star}
-            color="#FFCE56"
-          />
-          <StatCard
-            title="Total Reviews"
-            value={filteredData.length}
-            icon={BarChart3}
-            color="#9966FF"
-          />
-          <StatCard
-            title="Positive"
-            value={goodCount}
-            icon={Smile}
-            color="#4caf50"
-          />
-          <StatCard
-            title="Negative"
-            value={badCount}
-            icon={Frown}
-            color="#f44336"
-          />
-        </div>
-
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <Doughnut
-                    data={pieData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: "right",
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Reviews per OTA Platform</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <Bar
-                    data={{
-                      labels: severityData.labels,
-                      datasets: [
-                        {
-                          label: "Review Count",
-                          data: severityData.data,
-                          backgroundColor: [
-                            "#FF6384",
-                            "#36A2EB",
-                            "#FFCE56",
-                            "#4BC0C0",
-                            "#9966FF",
-                            "#FF9F40",
-                            "#E7E9ED",
-                            "#C9CBCF",
-                          ],
-                          borderRadius: 4,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            display: false,
-                          },
-                          ticks: {
-                            stepSize: 1,
-                          },
-                        },
-                        x: {
-                          grid: {
-                            display: false,
-                          },
-                        },
-                      },
-                      plugins: {
-                        legend: {
-                          display: false,
-                        },
-                        tooltip: {
-                          callbacks: {
-                            label: (context) => {
-                              return `Reviews: ${context.parsed.y}`;
-                            },
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Severity Rating Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <Bar
-                    data={{
-                      labels: Object.keys(ratingCounts),
-                      datasets: [
-                        {
-                          label: "Severity Rating (1-10)",
-                          data: Object.values(ratingCounts),
-                          backgroundColor: [
-                            "#f44336",
-                            "#e53935",
-                            "#ff5722",
-                            "#ff9800",
-                            "#ffc107",
-                            "#ffeb3b",
-                            "#cddc39",
-                            "#8bc34a",
-                            "#4caf50",
-                            "#2e7d32",
-                          ],
-                          borderRadius: 4,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      indexAxis: "y",
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: {
-                            display: false,
-                          },
-                          ticks: {
-                            stepSize: 1,
-                          },
-                          title: {
-                            display: true,
-                            text: "Severity Rating (1-10)",
-                          },
-                        },
-                        x: {
-                          grid: {
-                            display: false,
-                          },
-                          title: {
-                            display: true,
-                            text: "Number of Reviews",
-                          },
-                        },
-                      },
-                      plugins: {
-                        legend: {
-                          display: false,
-                        },
-                      },
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Sentiment by Severity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <Bar
-                    data={severityBasedChartData}
-                    options={{
-                      indexAxis: "x",
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        x: { stacked: true, grid: { display: false } },
-                        y: {
-                          stacked: true,
-                          max: 100,
-                          ticks: { callback: (v: unknown) => `${v}%` },
-                          title: { display: true, text: "Percentage (%)" },
-                          grid: { display: false },
-                        },
-                      },
-                      plugins: {
-                        tooltip: {
-                          callbacks: {
-                            label: (context) => {
-                              const dsIndex = context.datasetIndex ?? 0;
-                              const idx = context.dataIndex ?? 0;
-                              const label = context.dataset.label || "";
-                              const pct =
-                                context.parsed.y ?? context.parsed.x ?? 0;
-                              const abs =
-                                dsIndex === 0
-                                  ? severityByRange.positiveCounts[idx]
-                                  : severityByRange.negativeCounts[idx];
-                              const denom =
-                                severityByRange.totalPosNeg?.[idx] ?? 0;
-                              return `${label}: ${pct.toFixed(
-                                1
-                              )}% (${abs}/${denom})`;
-                            },
-                          },
-                        },
-                        legend: { position: "bottom" },
-                      },
-                    }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+        {filteredData.length === 0 ? (
+          <div>
+            <h1 className="text-center text-sm text-muted-foreground">
+              No data found for the selected filters.
+            </h1>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <StatCard
+                title="Rating"
+                value={`${averageSeverity.toFixed(2)}/10`}
+                icon={Star}
+                color="#FFCE56"
+              />
+              <StatCard
+                title="Total Reviews"
+                value={filteredData.length}
+                icon={BarChart3}
+                color="#9966FF"
+              />
+              <StatCard
+                title="Positive"
+                value={goodCount}
+                icon={Smile}
+                color="#4caf50"
+              />
+              <StatCard
+                title="Negative"
+                value={badCount}
+                icon={Frown}
+                color="#f44336"
+              />
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Areas of Concerns</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Bar
-                  data={areaOfInconvenienceChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: "x",
-                    scales: {
-                      x: {
-                        grid: {
-                          display: false,
-                        },
-                      },
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          display: false,
-                        },
-                      },
-                    },
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Areas of Appreciation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Bar
-                  data={areaOfBenefitChartData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: "x",
-                    scales: {
-                      x: {
-                        grid: {
-                          display: false,
-                        },
-                      },
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          display: false,
-                        },
-                      },
-                    },
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Rating Trends Over Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <Line
-                  data={trendsData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        grid: {
-                          display: false,
-                        },
-                      },
-                      x: {
-                        grid: {
-                          display: false,
-                        },
-                      },
-                    },
-                    plugins: {
-                      legend: {
-                        position: "top",
-                      },
-                    },
-                    elements: {
-                      line: {
-                        tension: 0.4,
-                        borderWidth: 2,
-                      },
-                      point: {
-                        radius: 4,
-                        hoverRadius: 6,
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle>Category Trend Over Time</CardTitle>
-              <Select
-                value={selectedCategory as AreaCategory}
-                onValueChange={(value) =>
-                  setSelectedCategory(value as AreaCategory)
-                }
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AREA_CATEGORIES.map((category: AreaCategory) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <Line
-                  data={categoryTrendData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          display: true,
-                          color:
-                            theme === "dark"
-                              ? "rgba(255,255,255,0.1)"
-                              : "rgba(0,0,0,0.1)",
-                        },
-                        title: {
-                          display: true,
-                          text: "Number of Mentions",
-                        },
-                        ticks: {
-                          stepSize: 1,
-                        },
-                      },
-                      x: {
-                        grid: {
-                          display: false,
-                        },
-                        title: {
-                          display: true,
-                          text: "Time Period",
-                        },
-                      },
-                    },
-                    plugins: {
-                      legend: {
-                        position: "top",
-                        labels: {
-                          boxWidth: 15,
-                          padding: 15,
-                          font: {
-                            size: 12,
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Review Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <Doughnut
+                        data={pieData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              position: "right",
+                            },
                           },
-                          usePointStyle: true,
-                        },
-                      },
-                      tooltip: {
-                        mode: "index",
-                        intersect: false,
-                        callbacks: {
-                          title: (context) => {
-                            return context[0].label;
-                          },
-                          label: (context) => {
-                            const label = context.dataset.label || "";
-                            const value = context.parsed.y;
-                            return `${label}: ${value} mention${
-                              value !== 1 ? "s" : ""
-                            }`;
-                          },
-                          afterLabel: (context) => {
-                            const dataIndex = context.dataIndex;
-                            const groupedByRange = groupCategoryTrendsByRange(
-                              filteredData,
-                              dateRange,
-                              selectedCategory
-                            );
-                            const bucket = groupedByRange[dataIndex];
-                            const total = bucket.inconvenience + bucket.benefit;
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
-                            if (total === 0) return "";
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Reviews per OTA Platform</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <Bar
+                        data={{
+                          labels: severityData.labels,
+                          datasets: [
+                            {
+                              label: "Review Count",
+                              data: severityData.data,
+                              backgroundColor: [
+                                "#FF6384",
+                                "#36A2EB",
+                                "#FFCE56",
+                                "#4BC0C0",
+                                "#9966FF",
+                                "#FF9F40",
+                                "#E7E9ED",
+                                "#C9CBCF",
+                              ],
+                              borderRadius: 4,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              grid: {
+                                display: false,
+                              },
+                              ticks: {
+                                stepSize: 1,
+                              },
+                            },
+                            x: {
+                              grid: {
+                                display: false,
+                              },
+                            },
+                          },
+                          plugins: {
+                            legend: {
+                              display: false,
+                            },
+                            tooltip: {
+                              callbacks: {
+                                label: (context) => {
+                                  return `Reviews: ${context.parsed.y}`;
+                                },
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
-                            const value = context.parsed.y;
-                            const percentage = ((value / total) * 100).toFixed(
-                              1
-                            );
-                            return `(${percentage}% of ${selectedCategory} mentions)`;
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Severity Rating Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <Bar
+                        data={{
+                          labels: Object.keys(ratingCounts),
+                          datasets: [
+                            {
+                              label: "Severity Rating (1-10)",
+                              data: Object.values(ratingCounts),
+                              backgroundColor: [
+                                "#f44336",
+                                "#e53935",
+                                "#ff5722",
+                                "#ff9800",
+                                "#ffc107",
+                                "#ffeb3b",
+                                "#cddc39",
+                                "#8bc34a",
+                                "#4caf50",
+                                "#2e7d32",
+                              ],
+                              borderRadius: 4,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          indexAxis: "y",
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              grid: {
+                                display: false,
+                              },
+                              ticks: {
+                                stepSize: 1,
+                              },
+                              title: {
+                                display: true,
+                                text: "Severity Rating (1-10)",
+                              },
+                            },
+                            x: {
+                              grid: {
+                                display: false,
+                              },
+                              title: {
+                                display: true,
+                                text: "Number of Reviews",
+                              },
+                            },
+                          },
+                          plugins: {
+                            legend: {
+                              display: false,
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Review Sentiment by Severity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <Bar
+                        data={severityBasedChartData}
+                        options={{
+                          indexAxis: "x",
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            x: { stacked: true, grid: { display: false } },
+                            y: {
+                              stacked: true,
+                              max: 100,
+                              ticks: { callback: (v: unknown) => `${v}%` },
+                              title: { display: true, text: "Percentage (%)" },
+                              grid: { display: false },
+                            },
+                          },
+                          plugins: {
+                            tooltip: {
+                              callbacks: {
+                                label: (context) => {
+                                  const dsIndex = context.datasetIndex ?? 0;
+                                  const idx = context.dataIndex ?? 0;
+                                  const label = context.dataset.label || "";
+                                  const pct =
+                                    context.parsed.y ?? context.parsed.x ?? 0;
+                                  const abs =
+                                    dsIndex === 0
+                                      ? severityByRange.positiveCounts[idx]
+                                      : severityByRange.negativeCounts[idx];
+                                  const denom =
+                                    severityByRange.totalPosNeg?.[idx] ?? 0;
+                                  return `${label}: ${pct.toFixed(
+                                    1
+                                  )}% (${abs}/${denom})`;
+                                },
+                              },
+                            },
+                            legend: { position: "bottom" },
+                          },
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Areas of Concerns</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <Bar
+                      data={areaOfInconvenienceChartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: "x",
+                        scales: {
+                          x: {
+                            grid: {
+                              display: false,
+                            },
+                          },
+                          y: {
+                            beginAtZero: true,
+                            grid: {
+                              display: false,
+                            },
                           },
                         },
-                      },
-                    },
-                    interaction: {
-                      mode: "nearest",
-                      axis: "x",
-                      intersect: false,
-                    },
-                  }}
-                />
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground text-center">
-                <p>
-                  Track how "{selectedCategory}" is perceived over time - as an
-                  concern (red) or appreciation (green)
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Areas of Appreciation</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <Bar
+                      data={areaOfBenefitChartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: "x",
+                        scales: {
+                          x: {
+                            grid: {
+                              display: false,
+                            },
+                          },
+                          y: {
+                            beginAtZero: true,
+                            grid: {
+                              display: false,
+                            },
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Rating Trends Over Time</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <Line
+                      data={trendsData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            grid: {
+                              display: false,
+                            },
+                          },
+                          x: {
+                            grid: {
+                              display: false,
+                            },
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            position: "top",
+                          },
+                        },
+                        elements: {
+                          line: {
+                            tension: 0.4,
+                            borderWidth: 2,
+                          },
+                          point: {
+                            radius: 4,
+                            hoverRadius: 6,
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle>Category Trend Over Time</CardTitle>
+                  <Select
+                    value={selectedCategory as AreaCategory}
+                    onValueChange={(value) =>
+                      setSelectedCategory(value as AreaCategory)
+                    }
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AREA_CATEGORIES.map((category: AreaCategory) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[400px]">
+                    <Line
+                      data={categoryTrendData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            grid: {
+                              display: true,
+                              color:
+                                theme === "dark"
+                                  ? "rgba(255,255,255,0.1)"
+                                  : "rgba(0,0,0,0.1)",
+                            },
+                            title: {
+                              display: true,
+                              text: "Number of Mentions",
+                            },
+                            ticks: {
+                              stepSize: 1,
+                            },
+                          },
+                          x: {
+                            grid: {
+                              display: false,
+                            },
+                            title: {
+                              display: true,
+                              text: "Time Period",
+                            },
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            position: "top",
+                            labels: {
+                              boxWidth: 15,
+                              padding: 15,
+                              font: {
+                                size: 12,
+                              },
+                              usePointStyle: true,
+                            },
+                          },
+                          tooltip: {
+                            mode: "index",
+                            intersect: false,
+                            callbacks: {
+                              title: (context) => {
+                                return context[0].label;
+                              },
+                              label: (context) => {
+                                const label = context.dataset.label || "";
+                                const value = context.parsed.y;
+                                return `${label}: ${value} mention${
+                                  value !== 1 ? "s" : ""
+                                }`;
+                              },
+                              afterLabel: (context) => {
+                                const dataIndex = context.dataIndex;
+                                const groupedByRange =
+                                  groupCategoryTrendsByRange(
+                                    filteredData,
+                                    dateRange,
+                                    selectedCategory
+                                  );
+                                const bucket = groupedByRange[dataIndex];
+                                const total =
+                                  bucket.inconvenience + bucket.benefit;
+
+                                if (total === 0) return "";
+
+                                const value = context.parsed.y;
+                                const percentage = (
+                                  (value / total) *
+                                  100
+                                ).toFixed(1);
+                                return `(${percentage}% of ${selectedCategory} mentions)`;
+                              },
+                            },
+                          },
+                        },
+                        interaction: {
+                          mode: "nearest",
+                          axis: "x",
+                          intersect: false,
+                        },
+                      }}
+                    />
+                  </div>
+                  <div className="mt-4 text-sm text-muted-foreground text-center">
+                    <p>
+                      Track how "{selectedCategory}" is perceived over time - as
+                      an concern (red) or appreciation (green)
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

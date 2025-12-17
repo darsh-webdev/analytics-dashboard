@@ -10,44 +10,52 @@ A comprehensive, interactive dashboard for analyzing hotel reviews across multip
 ## ✨ Features
 
 ### 🎯 Core Functionality
+
 - **Dynamic Routing**: Hotel-specific dashboards with URL parameters
 - **Advanced Filtering**: Filter by OTA platform and date ranges
 - **Real-time Updates**: Charts update instantly based on filter selections
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 
 ### 📊 Visualizations
-- **Review Distribution**: Doughnut chart showing sentiment breakdown
-- **Severity Analysis**: Bar chart displaying average severity scores
-- **Areas of Inconvenience**: Horizontal bar chart tracking common issues
-- **Trend Analysis**: Line chart showing review patterns over time
 
-### 🏨 Supported Hotels
-- Maritim Hotel
-- Infinity Hotel
-- Combined view (all hotels)
+- **Review Distribution**: Doughnut / pie charts for sentiment distribution.
+- **Severity Analysis**: Bar charts for severity scores or counts.
+- **Areas of Concerns / Appreciation**: Horizontal bars showing frequently cited areas.
+- **Trend Analysis**: Time-series line charts for ratings or sentiment over time.
+
+### 🏨 Supported OTAs & Sample Hotels
+
+- OTAs: `BOOKING_COM`, `GOOGLE_REVIEWS`, `EXPEDIA`, and `ALL` (combined).
+- Example hotel in the demo data: `The Grand Cypress Hotel`.
+- Combined / aggregated view is supported.
 
 ### 🔍 Filter Options
-- **OTA Platforms**: All, Booking.com, TripAdvisor
+
+- **OTA Platforms**: All, Booking.com, TripAdvisor, Google Reviews
 - **Date Ranges**: Last 7 days, 30 days, 3 months, 6 months, or all time
 
 ## 🚀 Quick Start
 
 ### Installation
+
 ```bash
 npm install
 ```
 
 ### Development
+
 ```bash
 npm run dev
 ```
 
 ### Build for Production
+
 ```bash
 npm run build
 ```
 
 ### Preview Production Build
+
 ```bash
 npm run preview
 ```
@@ -126,9 +134,9 @@ If you are developing a production application, we recommend updating the config
 
 ```js
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
 
@@ -143,40 +151,40 @@ export default defineConfig([
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import reactX from "eslint-plugin-react-x";
+import reactDom from "eslint-plugin-react-dom";
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
       // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
+      reactX.configs["recommended-typescript"],
       // Enable lint rules for React DOM
       reactDom.configs.recommended,
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
